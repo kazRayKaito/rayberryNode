@@ -1,0 +1,15 @@
+{
+  "name": "homeiot",
+  "version": "1.0.0",
+  "description": "websocket + vpn to host server for home iot",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "rayKaito",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.18.2",
+    "socket.io": "^4.5.4"
+  }
+}
