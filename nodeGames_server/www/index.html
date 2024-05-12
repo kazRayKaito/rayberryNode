@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Remote Control</title>
+    <title>Shared Canvas</title>
     <link rel="stylesheet" href="style.css" type="text/css">
     <script type="text/javascript" src="canvas.js"></script>
     <script type="text/javascript" src="inputManager.js"></script>
@@ -9,23 +9,17 @@
 	<meta name="viewport" content="width=device-width, initial-scale=1"/>
 </head>
 <body>
-    <h1 align="center">Remote Control</h1><br>
+    <h1 align="center">Shared Canvas</h1><br>
     <div id="canvas-container">
-        <canvas id="Video">Your browser doesn't support canvas</canvas></div><br>
+        <input type="button" value="Send" onclick="requestChangeUsername()">
+        <input type="text" id="username" value="Type new username here" onclick="clearTextboxUsername()"><br>
         <canvas id="Canvas">Your browser doesn't support canvas</canvas>
     </div>
 
     <script>
-        //Set vairables
-        let cool = 0; // 1 [ 0：OFF,   1：ON]
-        let temp =15; //15 [ 0 ~ 15]
-        let velo = 4; // 4 [ 0：自動,  1：1,    2：2,    3：3,    4：4]
-        let dire = 5; // 7 [ 0：自動,  1：横,   2：2,    3：3,    4：4,    5：下,   6：?,    7：全] 
-        let clean = 0;// 1 [ 0：OFF,   1：ON]
-        let power = 1;// 1 [ 0：OFF,   1：ON]
-
         //Set Canvas
         const canvas = document.getElementById("Canvas");
+        const textbox_username = document.getElementById("username");
 
         const socketio = io();
         
@@ -34,54 +28,24 @@
         let parameter = "";
 
         const log = (logText) => {socketio.emit("log", logText);}
+        const drawStart = (x,y) => {socketio.emit("drawStart", {"x":x,"y":y});}
+        const drawMove  = (x,y) => {socketio.emit("drawMove" , {"x":x,"y":y});}
+        const drawEnd   = (x,y) => {socketio.emit("drawEnd"  , {"x":x,"y":y});}
+        socketio.on('sign', function(msg){
+            log(msg);
+        })
+        socketio.on("addline",function(xyData){
+            addline(xyData);
+        });
+
         initCanvas();
         initEventlistener();
 
-        function clicked(code){
-            if     (code == "cool"){ cool = 1;}
-            else if(code == "heat"){ cool = 0;}
-            else if(code == "velo"){ velo = (velo) % 4 + 1;}
-            else if(code == "dire"){ dire = (dire) % 5 + 1;}
-            else if(code == "clean"){ clean = (clean + 1) % 2;}
-            else if(code == "power"){ power = (power + 1) % 2;}
-            draw();
+        const requestChangeUsername = () => {
+            socketio.emit("changeUsername",textbox_username.value);
         }
-        
-        function turnOff(){
-            socketio.emit("signal", "CB23012600000F086330000000000000BF00");
-        }
-
-        function sendSignal(){
-            //Decode Original Signal
-            for(let digit = 0; digit < 8; digit++){
-                digits[digit] = parseInt(signal_original.substring(digit * 4, (digit + 1) * 4), 16);
-            }
-
-            if(cool >= 0 && cool <= 1){
-                if(cool == 1){
-                    digits[3] += 16;
-                    digits[4] += 6;
-                }
-            }
-            if(temp >= 0 && temp <= 15)digits[3] += temp * 16 * 16;
-            if(velo >= 0 && velo <= 4) digits[4] += 16 * 16 * velo;
-            if(dire >= 0 && dire <= 7) digits[4] += 16 * 16 * dire * 8;
-            if(clean) digits[7] += 4;
-            if(power) digits[7] += 16 * 16 * 16;
-            //SUM CHECK
-            sum = 0;
-            for( let digit = 0; digit < 8; digit++){
-                sum = sum + (digits[digit] - digits[digit] % 256) / 256 + digits[digit] % 256;
-                sum = sum % 256;
-            }
-            digits[8] = 16 * 16 * sum;
-
-            //Encode to String
-            parameter = "";
-            for(let digit = 0; digit < 9; digit++){
-                parameter = parameter + ("0000" + digits[digit].toString(16).toUpperCase()).substr(-4);
-            }
-            socketio.emit("signal", parameter);
+        const clearTextboxUsername = () =>{
+            textbox_username.value = "";
         }
     </script>
 </body>
